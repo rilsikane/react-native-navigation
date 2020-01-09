@@ -1,42 +1,31 @@
 #import "RNNBottomTabsController.h"
-#import "UITabBarController+RNNUtils.h"
 
 @implementation RNNBottomTabsController {
 	NSUInteger _currentTabIndex;
-    BottomTabsBaseAttacher* _bottomTabsAttacher;
-}
-
-- (instancetype)initWithLayoutInfo:(RNNLayoutInfo *)layoutInfo
-                           creator:(id<RNNComponentViewCreator>)creator
-                           options:(RNNNavigationOptions *)options
-                    defaultOptions:(RNNNavigationOptions *)defaultOptions
-                         presenter:(RNNBasePresenter *)presenter
-                      eventEmitter:(RNNEventEmitter *)eventEmitter
-              childViewControllers:(NSArray *)childViewControllers
-                bottomTabsAttacher:(BottomTabsBaseAttacher *)bottomTabsAttacher {
-    self = [super initWithLayoutInfo:layoutInfo creator:creator options:options defaultOptions:defaultOptions presenter:presenter eventEmitter:eventEmitter childViewControllers:childViewControllers];
-    _bottomTabsAttacher = bottomTabsAttacher;
-    return self;
 }
 
 - (id<UITabBarControllerDelegate>)delegate {
 	return self;
 }
 
-- (void)render {
-    [_bottomTabsAttacher attach:self];
-}
-
 - (void)viewDidLayoutSubviews {
 	[self.presenter viewDidLayoutSubviews];
+    CGRect tabFrame = self.tabBar.frame; //self.TabBar is IBOutlet of your TabBar
+     tabFrame.size.height = 85;
+     tabFrame.origin.y = self.view.frame.size.height - 85;
+     self.tabBar.frame = tabFrame;
 }
 
 - (UIViewController *)getCurrentChild {
 	return self.selectedViewController;
 }
 
-- (CGFloat)getBottomTabsHeight {
-    return self.tabBar.frame.size.height;
+- (CGFloat)getTopBarHeight {
+    for(UIViewController * child in [self childViewControllers]) {
+        CGFloat childTopBarHeight = [child getTopBarHeight];
+        if (childTopBarHeight > 0) return childTopBarHeight;
+    }
+    return [super getTopBarHeight];
 }
 
 - (void)setSelectedIndexByComponentID:(NSString *)componentID {
@@ -63,6 +52,9 @@
 - (void)tabBarController:(UITabBarController *)tabBarController didSelectViewController:(UIViewController *)viewController {
 	[self.eventEmitter sendBottomTabSelected:@(tabBarController.selectedIndex) unselected:@(_currentTabIndex)];
 	_currentTabIndex = tabBarController.selectedIndex;
+}
+- (UITraitCollection *)traitCollection {
+    return [UITraitCollection traitCollectionWithHorizontalSizeClass:UIUserInterfaceSizeClassCompact];
 }
 
 @end
